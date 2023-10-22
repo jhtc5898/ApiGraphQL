@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html>
+  
+<head>
+  <title>GraphQL example use</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+    }
+
+    h1 {
+      color: #333;
+    }
+
+    #product-list {
+      list-style-type: none;
+      padding: 0;
+    }
+
+    li {
+      margin-bottom: 10px;
+    }
+
+    input[type="text"],
+    input[type="number"] {
+      width: 100%;
+      padding: 5px;
+      margin: 5px 0;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+
+    button {
+      background-color: #007bff;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      padding: 10px 20px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+    }
+  </style>
+</head>
+<body onload="fetchProducts()">
+  <h1>Productos</h1>
+  <ul id="product-list"></ul>
+
+  <h2>Agregar Producto</h2>
+  <input type="text" id="productName" placeholder="Nombre del producto">
+  <input type="text" id="numeroSerial" placeholder="Numero de serie">
+  <input type="text" id="peso" placeholder="Peso del producto">
+  <input type="text" id="tamano" placeholder="Tamaño del producto">
+  <input type="number" id="productValue" placeholder="Valor del producto">
+  <button onclick="addProduct()">Agregar Producto</button>
+
+  <script>
+    async function fetchProducts() {
+      const response = await fetch('http://localhost:4000/graphql', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          query: `
+            {
+              products {
+                id
+                name
+                numeroSerial
+                peso
+                tamano
+                value
+              }
+            }
+          `,
+        }),
+      });
+
+    if (!response.ok) {
+        console.error('Error en la solicitud GraphQL:', response.statusText);
+        return;
+    }
+
+      const data = await response.json();
+      console.log(data);
+      const productList = document.getElementById('product-list');
+      productList.innerHTML = '';
+
+      data.data.products.forEach(product => {
+        const li = document.createElement('li');
+        li.textContent = ` ID Mongo DB: ${product.id} ,
+         Nombre: ${product.name},
+         Numero de serie: ${product.numeroSerial},
+         Peso del producto: ${product.peso},
+         Tamaño del producto: ${product.name},
+          Valor: $${product.value}`;
+        productList.appendChild(li);
+      });
+    }
+
+    async function addProduct() {
+      const productName = document.getElementById('productName').value;
+      const numeroSerial = document.getElementById('numeroSerial').value;
+      const peso = document.getElementById('peso').value;
+      const tamano = document.getElementById('tamano').value;
+      const productValue = parseFloat(document.getElementById('productValue').value);
+
+      if (!productName || isNaN(productValue)) {
+        alert('Ingresa un nombre y un valor válido.');
+        return;
+      }
+
+      const response = await fetch('http://localhost:4000/graphql', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          query: `
+            mutation {
+              addProduct(
+              name: "${productName}", 
+              numeroSerial: "${numeroSerial}",
+              peso: "${peso}",
+              tamano: "${tamano}",
+              value: ${productValue}) {
+                id
+                name
+                numeroSerial
+                peso
+                tamano
+                value
+              }
+            }
+          `,
+        }),
+      });
+
+      await fetchProducts();
+      document.getElementById('productName').value = '';
+      document.getElementById('numeroSerial').value = '';
+      document.getElementById('peso').value = '';
+      document.getElementById('tamano').value = '';
+      document.getElementById('productValue').value = '';
+    }
+  </script>
+</body>
+</html>
